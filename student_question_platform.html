@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>질문 플랫폼</title>
+    <style>
+        /* 기본 스타일 */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; display: flex; background-color: #f8f9fc; color: #333; }
+        
+        /* 사이드바 스타일 */
+        .sidebar { 
+            width: 200px; 
+            background-color: #4e73df; 
+            color: #fff; 
+            height: 100vh; 
+            position: fixed; 
+            padding: 20px; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* 메뉴 그림자 */
+            transition: all 0.3s ease; 
+        }
+        .sidebar h2 { text-align: center; margin-bottom: 20px; }
+        .sidebar a, .sidebar button { 
+            color: #fff; text-decoration: none; display: block; padding: 10px 15px; 
+            margin-bottom: 5px; border-radius: 5px; border: none; background: none; 
+            cursor: pointer; text-align: left; transition: transform 0.2s, background 0.3s; 
+        }
+        .sidebar a:hover, .sidebar button:hover { background-color: #375ac4; transform: translateX(5px); }
+
+        /* 메인 컨테이너 */
+        .container { 
+            margin-left: 220px; /* 사이드바와의 간격 */
+            padding: 20px 40px; /* 내부 여백 */
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 질문 카드 */
+        .question-card { 
+            border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; 
+            background: #fff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            animation: slideIn 0.5s ease-out; 
+        }
+
+        /* 입력 필드와 버튼 */
+        textarea, input { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ddd; }
+        button { 
+            padding: 10px 20px; background-color: #4e73df; color: #fff; border: none; 
+            border-radius: 5px; cursor: pointer; transition: transform 0.2s; 
+        }
+        button:hover { background-color: #375ac4; transform: scale(1.05); }
+
+        /* 검색 바 */
+        .search-bar { text-align: center; margin-bottom: 20px; }
+        .search-bar input { width: 60%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .search-bar button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <h2>메뉴</h2>
+        <a href="#" id="menu-home">홈</a>
+        <a href="#" id="menu-my-questions">내 질문</a>
+        <a href="#" id="menu-category">카테고리</a>
+        <a href="#" id="menu-market">답변 장터</a>
+        <button id="menu-ask-question">질문하기</button>
+    </div>
+
+    <!-- 메인 컨테이너 -->
+    <div class="container" id="main-container">
+        <h1>홈 화면</h1>
+        <p>질문 플랫폼 메인 페이지입니다.</p>
+    </div>
+
+    <script>
+        const container = document.getElementById('main-container');
+        let myQuestions = [];
+        let marketQuestions = [];
+
+        function fadeInContent(content) {
+            container.style.opacity = '0';
+            container.innerHTML = content;
+            setTimeout(() => container.style.opacity = '1', 100);
+        }
+
+        // 홈 화면
+        document.getElementById('menu-home').addEventListener('click', () => {
+            fadeInContent(`<h1>홈 화면</h1><p>질문 플랫폼 메인 페이지입니다.</p>`);
+        });
+
+        // 내 질문 화면
+        document.getElementById('menu-my-questions').addEventListener('click', () => {
+            let content = `<h1>내 질문</h1>`;
+            if (myQuestions.length === 0) {
+                content += `<p>아직 작성한 질문이 없습니다.</p>`;
+            } else {
+                myQuestions.forEach((q, i) => {
+                    content += `
+                        <div class="question-card">
+                            <h3>질문 ${i + 1}</h3>
+                            <p>${q.question}</p>
+                            <small>태그: ${q.tags}</small>
+                            <div><strong>답변:</strong> ${q.answer || '아직 답변이 없습니다.'}</div>
+                        </div>`;
+                });
+            }
+            fadeInContent(content);
+        });
+
+        // 카테고리 화면
+        document.getElementById('menu-category').addEventListener('click', () => {
+            fadeInContent(`
+                <h1>카테고리</h1>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="태그로 검색하세요...">
+                    <button id="searchButton">검색</button>
+                </div>
+                <div id="searchResults"></div>
+            `);
+            document.getElementById('searchButton').addEventListener('click', () => {
+                const tag = document.getElementById('searchInput').value.trim().toLowerCase();
+                const results = marketQuestions.filter(q => q.tags.toLowerCase().includes(tag));
+                const resultsContainer = document.getElementById('searchResults');
+                resultsContainer.innerHTML = results.length > 0
+                    ? results.map((q, i) => `
+                        <div class="question-card">
+                            <h3>질문 ${i + 1}</h3>
+                            <p>${q.question}</p>
+                            <small>태그: ${q.tags}</small>
+                        </div>`).join('')
+                    : `<p>검색 결과가 없습니다.</p>`;
+            });
+        });
+
+        // 답변 장터 화면
+        document.getElementById('menu-market').addEventListener('click', () => {
+            let content = `<h1>답변 장터</h1>`;
+            if (marketQuestions.length === 0) {
+                content += `<p>등록된 질문이 없습니다.</p>`;
+            } else {
+                marketQuestions.forEach((q, i) => {
+                    content += `
+                        <div class="question-card">
+                            <h3>질문 ${i + 1}</h3>
+                            <p>${q.question}</p>
+                            <small>태그: ${q.tags}</small>
+                            <button onclick="addAnswer(${i})">답변하기</button>
+                            <div><strong>답변:</strong> ${q.answer || '아직 답변이 없습니다.'}</div>
+                        </div>`;
+                });
+            }
+            fadeInContent(content);
+        });
+
+        // 질문하기 화면
+        document.getElementById('menu-ask-question').addEventListener('click', () => {
+            fadeInContent(`
+                <h1>질문하기</h1>
+                <textarea id="questionInput" placeholder="질문을 입력하세요..."></textarea>
+                <input id="tagInput" placeholder="태그 입력 (예: 수학, 과학)">
+                <button id="submitQuestion">질문 올리기</button>
+            `);
+            document.getElementById('submitQuestion').addEventListener('click', () => {
+                const question = document.getElementById('questionInput').value.trim();
+                const tags = document.getElementById('tagInput').value.trim();
+                if (!question) return alert('질문을 입력하세요.');
+                myQuestions.push({ question, tags, answer: null });
+                marketQuestions.push({ question, tags, answer: null });
+                alert('질문이 등록되었습니다!');
+                document.getElementById('menu-market').click();
+            });
+        });
+
+        function addAnswer(index) {
+            const answer = prompt('답변을 입력하세요:');
+            if (answer) {
+                marketQuestions[index].answer = answer;
+                myQuestions[index].answer = answer;
+                alert('답변이 등록되었습니다!');
+                document.getElementById('menu-market').click();
+            }
+        }
+
+        fadeInContent(`<h1>홈 화면</h1><p>질문 플랫폼 메인 페이지입니다.</p>`);
+    </script>
+</body>
+</html>
